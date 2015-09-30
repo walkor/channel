@@ -21,11 +21,6 @@ class Client
         {
              self::$_remoteIp = $ip;
              self::$_remotePort = $port;
-             if(self::$_remoteConnection)
-             {
-                  self::$_remoteConnection->onClose = null;
-                  self::$_remoteConnection->destroy();
-             }
              self::$_remoteConnection = new AsyncTcpConnection('Text://'.self::$_remoteIp.':'.self::$_remotePort);
              self::$_remoteConnection->onClose = 'Channel\Client::onRemoteClose'; 
              self::$_remoteConnection->onConnect = 'Channel\Client::onRemoteConnect';
