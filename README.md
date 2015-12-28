@@ -3,7 +3,7 @@
 （服务端和客户端只能在workerman环境中使用）
 
 # 服务端
-```
+```php
 use Workerman\Worker;
 
 $channel_server = new Channel\Server(2206);
@@ -15,6 +15,7 @@ if(!defined('GLOBAL_START'))
 ```
 
 # 客户端
+```php
 use Workerman\Worker;
 
 $worker = new Worker(....);
