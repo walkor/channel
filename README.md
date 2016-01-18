@@ -6,7 +6,7 @@
 ```php
 use Workerman\Worker;
 
-$channel_server = new Channel\Server(2206);
+$channel_server = new Channel\Server('0.0.0.0', 2206);
 
 if(!defined('GLOBAL_START'))
 {
