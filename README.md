@@ -26,7 +26,7 @@ $worker->onWorkerStart = function()
 {
     // Channel客户端连接到Channel服务端
     Channel\Client::connect('<Channel服务端ip>', 2206);
-    // 订阅某个自定义事件
+    // 订阅某个自定义事件并注册回调，收到事件后会自动触发此回调
     Channel\Client::on('event_xxx', function($event_data){
         var_dump($event_data);
     });
