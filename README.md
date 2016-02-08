@@ -26,17 +26,15 @@ $worker->onWorkerStart = function()
 {
     // Channel客户端连接到Channel服务端
     Channel\Client::connect('<Channel服务端ip>', 2206);
-    // 订阅某个主题
-    Channel\Client::subscribe('subject_xxx');
-    // 当自己订阅的主题有消息时触发的回调
-    Channel\Client::$onMessage = function($channel, $data){
-        var_dump($channel, $data);
-    };
+    // 订阅某个自定义事件
+    Channel\Client::on('event_xxx', function($event_data){
+        var_dump($event_data);
+    });
 };
 $worker->onMessage = function($connection, $data)
 {
-    // 向subject_xxx的订阅进程发送消息
-    Channel\Client::publish('subject_xxx', array('some data', 'some data'));
+    // 发布某个自定义事件，订阅这个事件的客户端会收到事件数据，并触发客户端对应的事件回调
+    Channel\Client::publish('event_xxx', array('some data.', 'some data..'));
 };
 
 if(!defined('GLOBAL_START'))
