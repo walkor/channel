@@ -47,6 +47,7 @@ class Client
     public static function onRemoteClose()
     {
         echo "Waring channel connection closed and try to reconnect\n";
+        self::$_remoteConnection = null;
         self::clearTimer();
         self::$_timer = Timer::add(1, 'Channel\Client::connect', array(self::$_remoteIp, self::$_remotePort));
     }
