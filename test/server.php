@@ -10,12 +10,12 @@ $channel_server = new Channel\Server();
 $worker = new Worker();
 $worker->onWorkerStart = function()
 {
-    Channel\Client::$onMessage = function($channel, $data){
-        var_dump($channel, $data);
-    };
-    Channel\Client::subscribe('abc');
+    Channel\Client::on('test event', function($event_data){
+        echo 'test event triggered event_data is :';
+        var_dump($event_data);
+    });
     Timer::add(5, function(){
-        Channel\Client::publish('abc', array('efg'));
+        Channel\Client::publish('test event', 'some data');
     });
 };
 

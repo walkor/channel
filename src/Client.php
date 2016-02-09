@@ -3,6 +3,10 @@ namespace Channel;
 use Workerman\Lib\Timer;
 use Workerman\Connection\AsyncTcpConnection;
 
+/**
+ * Channel/Client
+ * @version 1.0.1
+ */
 class Client 
 {
     public static $onMessage = null;
@@ -35,9 +39,13 @@ class Client
                  {
                      call_user_func(self::$_events[$event], $event_data);
                  }
-                 else
+                 elseif(!empty(Client::$onMessage))
                  {
                      call_user_func(Client::$onMessage, $event, $event_data);
+                 }
+                 else
+                 {
+                     throw new \Exception("event:$event have not callback");
                  }
              };
              self::$_remoteConnection->connect();
