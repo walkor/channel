@@ -35,6 +35,10 @@ class Server
 
     public function onMessage($connection, $data)
     {
+        if(!$data)
+        {
+            return;
+        }
         $worker = $this->_worker;
         $data = unserialize($data);
         $type = $data['type'];

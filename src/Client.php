@@ -17,9 +17,13 @@ class Client
 
     protected static $_remotePort = null;
 
-    protected static $_timer = null;
+    protected static $_reconnectTimer = null;
+    
+    protected static $_pingTimer = null;
     
     protected static $_events = array();
+    
+    const PING_INTERVAL = 20;
 
     public static function connect($ip = '127.0.0.1', $port = 2206)
     {
@@ -49,7 +53,17 @@ class Client
                  }
              };
              self::$_remoteConnection->connect();
+             
+             if(empty(self::$_pingTimer))
+             {
+                 self::$_pingTimer = Timer::add(self::PING_INTERVAL, 'Channel\Client::ping');
+             }
          }    
+    }
+    
+    public static function ping()
+    {
+        self::$_remoteConnection->send('');
     }
 
     public static function onRemoteClose()
@@ -57,7 +71,7 @@ class Client
         echo "Waring channel connection closed and try to reconnect\n";
         self::$_remoteConnection = null;
         self::clearTimer();
-        self::$_timer = Timer::add(1, 'Channel\Client::connect', array(self::$_remoteIp, self::$_remotePort));
+        self::$_reconnectTimer = Timer::add(1, 'Channel\Client::connect', array(self::$_remoteIp, self::$_remotePort));
     }
 
     public static function onRemoteConnect()
@@ -72,10 +86,10 @@ class Client
 
     public static function clearTimer()
     {
-        if(self::$_timer)
+        if(self::$_reconnectTimer)
         {
-           Timer::del(self::$_timer);
-           self::$_timer = null;
+           Timer::del(self::$_reconnectTimer);
+           self::$_reconnectTimer = null;
         }
     }
     
