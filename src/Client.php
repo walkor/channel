@@ -63,7 +63,10 @@ class Client
     
     public static function ping()
     {
-        self::$_remoteConnection->send('');
+        if(self::$_remoteConnection)
+        {
+            self::$_remoteConnection->send('');
+        }
     }
 
     public static function onRemoteClose()
