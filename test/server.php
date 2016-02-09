@@ -11,7 +11,7 @@ $worker = new Worker();
 $worker->onWorkerStart = function()
 {
     Channel\Client::on('test event', function($event_data){
-        echo 'test event triggered event_data is :';
+        echo 'test event triggered event_data :';
         var_dump($event_data);
     });
     Timer::add(5, function(){
