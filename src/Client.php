@@ -5,7 +5,7 @@ use Workerman\Connection\AsyncTcpConnection;
 
 /**
  * Channel/Client
- * @version 1.0.1
+ * @version 1.0.2
  */
 class Client 
 {
@@ -34,24 +34,7 @@ class Client
              self::$_remoteConnection = new AsyncTcpConnection('Text://'.self::$_remoteIp.':'.self::$_remotePort);
              self::$_remoteConnection->onClose = 'Channel\Client::onRemoteClose'; 
              self::$_remoteConnection->onConnect = 'Channel\Client::onRemoteConnect';
-             self::$_remoteConnection->onMessage = function($connection, $data)
-             {
-                 $data = unserialize($data);
-                 $event = $data['channel'];
-                 $event_data = $data['data'];
-                 if(!empty(self::$_events[$event]))
-                 {
-                     call_user_func(self::$_events[$event], $event_data);
-                 }
-                 elseif(!empty(Client::$onMessage))
-                 {
-                     call_user_func(Client::$onMessage, $event, $event_data);
-                 }
-                 else
-                 {
-                     throw new \Exception("event:$event have not callback");
-                 }
-             };
+             self::$_remoteConnection->onMessage = 'Channel\Client::onRemoteMessage';
              self::$_remoteConnection->connect();
              
              if(empty(self::$_pingTimer))
@@ -60,6 +43,25 @@ class Client
              }
          }    
     }
+    
+    public static function onRemoteMessage($connection, $data)
+     {
+         $data = unserialize($data);
+         $event = $data['channel'];
+         $event_data = $data['data'];
+         if(!empty(self::$_events[$event]))
+         {
+             call_user_func(self::$_events[$event], $event_data);
+         }
+         elseif(!empty(Client::$onMessage))
+         {
+             call_user_func(Client::$onMessage, $event, $event_data);
+         }
+         else
+         {
+             throw new \Exception("event:$event have not callback");
+         }
+     }
     
     public static function ping()
     {
