@@ -8,7 +8,7 @@ class Server
 
     public function __construct($ip = '0.0.0.0', $port = 2206)
     {
-        $worker = new Worker("Text://$ip:$port");
+        $worker = new Worker("text://$ip:$port");
         $worker->count = 1;
         $worker->name = 'ChannelServer';
         $worker->channels = array();
