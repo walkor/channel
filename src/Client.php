@@ -5,33 +5,71 @@ use Workerman\Connection\AsyncTcpConnection;
 
 /**
  * Channel/Client
- * @version 1.0.2
+ * @version 1.0.3
  */
 class Client 
 {
+    /**
+     * onMessage.
+     * @var callback
+     */
     public static $onMessage = null;
 
+    /**
+     * Connction to channel server.
+     * @var TcpConnection
+     */
     protected static $_remoteConnection = null;
 
+    /**
+     * Channel server ip.
+     * @var string
+     */
     protected static $_remoteIp = null;
 
+    /**
+     * Channel server port.
+     * @var int
+     */
     protected static $_remotePort = null;
 
+    /**
+     * Reconnect timer.
+     * @var Timer
+     */
     protected static $_reconnectTimer = null;
     
+    /**
+     * Ping timer.
+     * @var Timer
+     */
     protected static $_pingTimer = null;
     
+    /**
+     * All event callback.
+     * @var array
+     */
     protected static $_events = array();
     
-    const PING_INTERVAL = 20;
+    /**
+     * Ping interval.
+     * @var int
+     */
+    public $pingInterval = 20;
 
+    /**
+     * Connect to channel server
+     * @param string $ip
+     * @param int $port
+     * @return void
+     */
     public static function connect($ip = '127.0.0.1', $port = 2206)
     {
         if(!self::$_remoteConnection)
         {
              self::$_remoteIp = $ip;
              self::$_remotePort = $port;
-             self::$_remoteConnection = new AsyncTcpConnection('Text://'.self::$_remoteIp.':'.self::$_remotePort);
+             self::$_remoteConnection = new AsyncTcpConnection('frame://'.self::$_remoteIp.':'.self::$_remotePort);
              self::$_remoteConnection->onClose = 'Channel\Client::onRemoteClose'; 
              self::$_remoteConnection->onConnect = 'Channel\Client::onRemoteConnect';
              self::$_remoteConnection->onMessage = 'Channel\Client::onRemoteMessage';
@@ -39,11 +77,17 @@ class Client
              
              if(empty(self::$_pingTimer))
              {
-                 self::$_pingTimer = Timer::add(self::PING_INTERVAL, 'Channel\Client::ping');
+                 self::$_pingTimer = Timer::add(self::$pingInterval, 'Channel\Client::ping');
              }
          }    
     }
     
+    /**
+     * onRemoteMessage.
+     * @param TcpConnection $connection
+     * @param string $data
+     * @throws \Exception
+     */
     public static function onRemoteMessage($connection, $data)
      {
          $data = unserialize($data);
@@ -63,6 +107,10 @@ class Client
          }
      }
     
+     /**
+      * Ping.
+      * @return void
+      */
     public static function ping()
     {
         if(self::$_remoteConnection)
@@ -71,6 +119,10 @@ class Client
         }
     }
 
+    /**
+     * onRemoteClose.
+     * @return void
+     */
     public static function onRemoteClose()
     {
         echo "Waring channel connection closed and try to reconnect\n";
@@ -79,6 +131,10 @@ class Client
         self::$_reconnectTimer = Timer::add(1, 'Channel\Client::connect', array(self::$_remoteIp, self::$_remotePort));
     }
 
+    /**
+     * onRemoteConnect.
+     * @return void
+     */
     public static function onRemoteConnect()
     {
         $all_event_names = array_keys(self::$_events);
@@ -89,6 +145,10 @@ class Client
         self::clearTimer();
     }
 
+    /**
+     * clearTimer.
+     * @return void
+     */
     public static function clearTimer()
     {
         if(self::$_reconnectTimer)
@@ -98,6 +158,12 @@ class Client
         }
     }
     
+    /**
+     * On.
+     * @param string $event
+     * @param callback $callback
+     * @throws \Exception
+     */
     public static function on($event, $callback)
     {
         if(!is_callable($callback))
@@ -108,6 +174,11 @@ class Client
         self::subscribe(array($event));
     }
 
+    /**
+     * Subscribe.
+     * @param string $events
+     * @return void
+     */
     public static function subscribe($events)
     {
          self::connect();
@@ -122,6 +193,11 @@ class Client
          self::$_remoteConnection->send(serialize(array('type' => 'subscribe', 'channels'=>(array)$events)));
     }
 
+    /**
+     * Unsubscribe.
+     * @param string $events
+     * @return void
+     */
     public static function unsubscribe($events)
     {
         self::connect();
@@ -133,6 +209,11 @@ class Client
         self::$_remoteConnection->send(serialize(array('type' => 'unsubscribe', 'channels'=>$events))); 
     }
 
+    /**
+     * Publish.
+     * @param string $events
+     * @param mixed $data
+     */
     public static function publish($events, $data)
     {
         self::connect();

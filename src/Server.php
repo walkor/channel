@@ -1,14 +1,25 @@
 <?php
 namespace Channel;
 use Workerman\Worker;
-
+/**
+ * Channel server.
+ */
 class Server
 {
+    /**
+     * Worker instance.
+     * @var Worker
+     */
     protected $_worker = null;
 
+    /**
+     * Construct.
+     * @param string $ip
+     * @param int $port
+     */
     public function __construct($ip = '0.0.0.0', $port = 2206)
     {
-        $worker = new Worker("text://$ip:$port");
+        $worker = new Worker("frame://$ip:$port");
         $worker->count = 1;
         $worker->name = 'ChannelServer';
         $worker->channels = array();
@@ -17,6 +28,10 @@ class Server
         $this->_worker = $worker;
     }
 
+    /**
+     * onClose
+     * @return void
+     */
     public function onClose()
     {
         if(empty($connection->channels))
@@ -33,6 +48,11 @@ class Server
         }
     }
 
+    /**
+     * onMessage.
+     * @param TcpConnection $connection
+     * @param string $data
+     */
     public function onMessage($connection, $data)
     {
         if(!$data)
@@ -83,7 +103,6 @@ class Server
                     }
                 }
                 break;
-
         }
     }
 }
