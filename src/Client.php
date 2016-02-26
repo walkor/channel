@@ -55,7 +55,7 @@ class Client
      * Ping interval.
      * @var int
      */
-    public $pingInterval = 20;
+    public static $pingInterval = 25;
 
     /**
      * Connect to channel server
