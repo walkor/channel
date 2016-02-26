@@ -99,7 +99,7 @@ class Server
                     $buffer = serialize(array('channel'=>$channel, 'data' => $data['data']))."\n";
                     foreach($worker->channels[$channel] as $connection)
                     {
-                        $connection->send($buffer, true);
+                        $connection->send($buffer);
                     }
                 }
                 break;
