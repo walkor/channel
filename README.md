@@ -1,6 +1,5 @@
 # Channel
-基于订阅的多进程通讯组件，类似redis订阅发布机制。
-（服务端和客户端只能在workerman环境中使用）
+基于订阅的多进程通讯组件，类似redis订阅发布机制。基于workerman开发。
 
 # 手册地址
 [Channel手册](http://doc3.workerman.net/component/channel.html)
