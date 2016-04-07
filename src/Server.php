@@ -32,7 +32,7 @@ class Server
      * onClose
      * @return void
      */
-    public function onClose()
+    public function onClose($connection)
     {
         if(empty($connection->channels))
         {
