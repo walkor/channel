@@ -16,6 +16,18 @@ class Client
     public static $onMessage = null;
 
     /**
+     * onConnect
+     * @var callback
+     */
+    public static $onConnect = null;
+
+    /**
+     * onClose
+     * @var callback
+     */
+    public static $onClose = null;
+
+    /**
      * Connction to channel server.
      * @var TcpConnection
      */
@@ -129,6 +141,9 @@ class Client
         self::$_remoteConnection = null;
         self::clearTimer();
         self::$_reconnectTimer = Timer::add(1, 'Channel\Client::connect', array(self::$_remoteIp, self::$_remotePort));
+        if (self::$onClose) {
+            call_user_func(Client::$onClose);
+        }
     }
 
     /**
@@ -143,6 +158,10 @@ class Client
             self::subscribe($all_event_names);
         }
         self::clearTimer();
+
+        if (self::$onConnect) {
+            call_user_func(Client::$onConnect);
+        }
     }
 
     /**
