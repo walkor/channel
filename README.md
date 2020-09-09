@@ -2,7 +2,7 @@
 基于订阅的多进程通讯组件，用于workerman进程间通讯或者服务器集群通讯，类似redis订阅发布机制。基于workerman开发。
 
 # 手册地址
-[Channel手册](http://doc3.workerman.net/component/channel.html)
+[Channel手册](http://doc.workerman.net/components/channel.html)
 
 # 服务端
 ```php
