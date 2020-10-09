@@ -13,6 +13,18 @@ class Server
     protected $_worker = null;
 
     /**
+     * Queues
+     *
+     * Fields of array element:
+     * watcher: TcpConnections[]
+     * pulls: TcpConnections[]
+     * queue: SplQueue
+     *
+     * @var array
+     */
+    protected $_queues = array();
+
+    /**
      * Construct.
      * @param string $ip
      * @param int $port
@@ -50,7 +62,7 @@ class Server
 
     /**
      * onMessage.
-     * @param TcpConnection $connection
+     * @param \Workerman\Connection\TcpConnection $connection
      * @param string $data
      */
     public function onMessage($connection, $data)
@@ -96,13 +108,43 @@ class Server
                     {
                         continue;
                     }
-                    $buffer = serialize(array('channel'=>$channel, 'data' => $data['data']))."\n";
+                    $buffer = serialize(array('type'=>'event', 'channel'=>$channel, 'data' => $data['data']))."\n";
                     foreach($worker->channels[$channel] as $connection)
                     {
                         $connection->send($buffer);
                     }
                 }
                 break;
+            case 'watch':
+                $queue = $this->getQueue();
+                $connection->watchs[$channels] = $channels;
+                $queue->addWatch($connection);
+                break;
+            case 'unwatch':
+                if (isset($this->_queues[$channels])) {
+                    if (isset($connection->watchs[$channels])) {
+                        unset($connection->watchs[$channels]);
+                    }
+                    if (isset($worker->queues[$channels]['watcher'][$connection->id])) {
+
+                    }
+                }
+                $this->initQueue($channels);
+                break;
+            case 'push':
+                break;
+            case 'pull':
+                $connection->pulling = true;
+                break;
         }
     }
+
+    public function getQueue($channel)
+    {
+        if (isset($this->queues[$channel])) {
+            return $this->_queues[$channel];
+        }
+        return $this->_queues[$channel] = new Queue($channel);
+    }
+
 }
