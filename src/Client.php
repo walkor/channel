@@ -118,21 +118,33 @@ class Client
 
     /**
      * onRemoteMessage.
-     * @param TcpConnection $connection
+     * @param \Workerman\Connection\TcpConnection $connection
      * @param string $data
      * @throws \Exception
      */
     public static function onRemoteMessage($connection, $data)
     {
         $data = unserialize($data);
+        $type = $data['type'];
         $event = $data['channel'];
         $event_data = $data['data'];
-        if (!empty(self::$_events[$event])) {
-            call_user_func(self::$_events[$event], $event_data);
-        } elseif (!empty(Client::$onMessage)) {
-            call_user_func(Client::$onMessage, $event, $event_data);
+
+        $callback = null;
+
+        if ($type == 'event') {
+	        if (!empty(self::$_events[$event])) {
+		        call_user_func(self::$_events[$event], $event_data);
+	        } elseif (!empty(Client::$onMessage)) {
+		        call_user_func(Client::$onMessage, $event, $event_data);
+	        } else {
+		        throw new \Exception("event:$event have not callback");
+	        }
         } else {
-            throw new \Exception("event:$event have not callback");
+	        if (isset(self::$_queues[$event])) {
+		        call_user_func(self::$_queues[$event], $event_data);
+	        } else {
+		        throw new \Exception("queue:$event have not callback");
+	        }
         }
     }
 
@@ -254,31 +266,44 @@ class Client
 
     /**
      * Watch a channel of queue
-     * @param $channel
-     * @param $callback
+     * @param string|array $channels
+     * @param callable $callback
+     * @param boolean $autoReserve Auto reserve after callback finished.
+     * But sometime you may don't want reserve immediately, or in some asynchronous job,
+     * you want reserve in finished callback, so you should set $autoReserve to false
+     * and call Client::reserve() after watch() and in finish callback manually.
      * @throws \Exception
      */
-    public static function watch($channel, $callback)
+    public static function watch($channels, $callback, $autoReserve=true)
     {
         if (!is_callable($callback)) {
             throw new \Exception('callback is not callable for watch.');
         }
 
-        self::send(array('type' => 'watch', 'channels'=>$channel));
+        if ($autoReserve) {
+        	$callback = static function($data) use ($callback) {
+		        try {
+			        call_user_func($callback, $data);
+		        } catch (\Exception $e) {
+			        throw $e;
+		        } catch (\Error $e) {
+			        throw $e;
+		        } finally {
+			        self::reserve();
+		        }
+	        };
+        }
 
-        self::$_events[$channel] = static function($data) use ($callback) {
-            try {
-                call_user_func($callback, $data);
-            } catch (\Exception $e) {
-                throw $e;
-            } catch (\Error $e) {
-                throw $e;
-            } finally {
-                self::send(array('type' => 'pull'));
-            }
-        };
+	    $channels = (array)$channels;
+        self::send(array('type' => 'watch', 'channels'=>$channels));
 
-        self::send(array('type' => 'pull'));
+        foreach ($channels as $channel) {
+        	self::$_queues[$channel] = $callback;
+        }
+
+        if ($autoReserve) {
+	        self::reserve();
+        }
     }
 
     /**
@@ -286,17 +311,35 @@ class Client
      * @param string $channel
      * @throws \Exception
      */
-    public static function unwatch($channel)
+    public static function unwatch($channels)
     {
-        self::send(array('type' => 'unwatch', 'channels'=>$channel));
-        if (isset(self::$_events[$channel])) {
-            unset(self::$_events[$channel]);
+	    $channels = (array)$channels;
+        self::send(array('type' => 'unwatch', 'channels'=>$channels));
+        foreach ($channels as $channel) {
+	        if (isset(self::$_queues[$channel])) {
+		        unset(self::$_queues[$channel]);
+	        }
         }
     }
 
-    public static function push($channel, $data)
+	/**
+	 * Put data to queue
+	 * @param string|array $channels
+	 * @param mixed $data
+	 * @throws \Exception
+	 */
+    public static function enqueue($channels, $data)
     {
-        self::sendAnyway(array('type' => 'push', 'channels' => $channel, 'data' => $data));
+        self::sendAnyway(array('type' => 'enqueue', 'channels' => (array)$channels, 'data' => $data));
+    }
+
+	/**
+	 * Start reserve queue manual
+	 * @throws \Exception
+	 */
+    public static function reserve()
+    {
+	    self::send(array('type' => 'reserve'));
     }
 
     /**

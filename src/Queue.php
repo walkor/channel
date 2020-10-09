@@ -9,7 +9,7 @@ class Queue
 
     public $name = 'default';
     public $watcher = array();
-    public $pulls = array();
+    public $consumer = array();
     protected $queue = null;
 
     public function __construct($name)
@@ -23,7 +23,10 @@ class Queue
      */
     public function addWatch($connection)
     {
-        $this->watcher[$connection->id] = $connection;
+    	if (!isset($this->watcher[$connection->id])) {
+		    $this->watcher[$connection->id] = $connection;
+		    $connection->watchs[] = $this->name;
+	    }
     }
 
     /**
@@ -31,15 +34,51 @@ class Queue
      */
     public function removeWatch($connection)
     {
-        if (isset($connection->watchs[$this->name])) {
-            unset($connection->watchs[$this->name]);
+        if (isset($connection->watchs) && in_array($this->name, $connection->watchs)) {
+        	$idx = array_search($this->name, $connection->watchs);
+            unset($connection->watchs[$idx]);
         }
         if (isset($this->watcher[$connection->id])) {
             unset($this->watcher[$connection->id]);
         }
-        if (isset($this->pulls[$connection->id])) {
-            unset($this->pulls[$connection->id]);
+        if (isset($this->consumer[$connection->id])) {
+            unset($this->consumer[$connection->id]);
         }
+    }
+
+	/**
+	 * @param TcpConnection $connection
+	 */
+    public function addConsumer($connection)
+    {
+    	if (isset($this->watcher[$connection->id]) && !isset($this->consumer[$connection->id])) {
+    		$this->consumer[$connection->id] = $connection;
+	    }
+	    $this->dispatch();
+    }
+
+    public function enqueue($data)
+    {
+    	$this->queue->enqueue($data);
+    	$this->dispatch();
+    }
+
+    private function dispatch()
+    {
+    	if ($this->queue->isEmpty() || count($this->consumer) == 0) {
+    		return;
+	    }
+
+		while (!$this->queue->isEmpty()) {
+    		$data = $this->queue->dequeue();
+    		$idx = key($this->consumer);
+    		$connection = $this->consumer[$idx];
+    		unset($this->consumer[$idx]);
+	        $connection->send(serialize(array('type'=>'queue', 'channel'=>$this->name, 'data' => $data)));
+	        if (count($this->consumer) == 0) {
+		        break;
+	        }
+		}
     }
 
     public function isEmpty()
