@@ -15,7 +15,11 @@ Channel 提供两种通讯形式，分别是发布订阅的事件机制和消息
 ```php
 use Workerman\Worker;
 
+//Tcp 通讯方式
 $channel_server = new Channel\Server('0.0.0.0', 2206);
+
+//Unix Domain Socket 通讯方式
+//$channel_server = new Channel\Server('unix:///tmp/workerman-channel.sock');
 
 if(!defined('GLOBAL_START'))
 {
@@ -27,11 +31,15 @@ if(!defined('GLOBAL_START'))
 ```php
 use Workerman\Worker;
 
-$worker = new Worker(....);
+$worker = new Worker();
 $worker->onWorkerStart = function()
 {
     // Channel客户端连接到Channel服务端
     Channel\Client::connect('<Channel服务端ip>', 2206);
+
+    // 使用 Unix Domain Socket 通讯
+    //Channel\Client::connect('unix:///tmp/workerman-channel.sock');
+
     // 要订阅的事件名称（名称可以为任意的数字和字符串组合）
     $event_name = 'event_xxxx';
     // 订阅某个自定义事件并注册回调，收到事件后会自动触发此回调

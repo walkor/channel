@@ -1,11 +1,13 @@
 <?php
 namespace Channel;
-use Workerman\Lib\Timer;
+
 use Workerman\Connection\AsyncTcpConnection;
+use Workerman\Lib\Timer;
+use Workerman\Protocols\Frame;
 
 /**
  * Channel/Client
- * @version 1.0.5
+ * @version 1.0.7
  */
 class Client
 {
@@ -29,7 +31,7 @@ class Client
 
     /**
      * Connction to channel server.
-     * @var TcpConnection
+     * @var \Workerman\Connection\TcpConnection
      */
     protected static $_remoteConnection = null;
 
@@ -82,38 +84,51 @@ class Client
 
     /**
      * Connect to channel server
-     * @param string $ip
-     * @param int $port
-     * @return void
+     * @param string $ip Channel server ip address or unix domain socket address
+     * Ip like (TCP): 192.168.1.100
+     * Unix domain socket like: unix:///tmp/workerman-channel.sock
+     * @param int $port Port to connect when use tcp
      */
     public static function connect($ip = '127.0.0.1', $port = 2206)
     {
-        if(!self::$_remoteConnection)
-        {
-            self::$_remoteIp = $ip;
-            self::$_remotePort = $port;
-            if (PHP_SAPI !== 'cli' || !class_exists('Workerman\Worker', false)) {
-                self::$_isWorkermanEnv = false;
-            }
-            // For workerman environment.
-            if (self::$_isWorkermanEnv) {
-                self::$_remoteConnection = new AsyncTcpConnection('frame://' . self::$_remoteIp . ':' . self::$_remotePort);
-                self::$_remoteConnection->onClose = 'Channel\Client::onRemoteClose';
-                self::$_remoteConnection->onConnect = 'Channel\Client::onRemoteConnect';
-                self::$_remoteConnection->onMessage = 'Channel\Client::onRemoteMessage';
-                self::$_remoteConnection->connect();
+        if (self::$_remoteConnection) {
+            return;
+        }
 
-                if (empty(self::$_pingTimer)) {
-                    self::$_pingTimer = Timer::add(self::$pingInterval, 'Channel\Client::ping');
-                }
-                // Not workerman environment.
+        self::$_remoteIp = $ip;
+        self::$_remotePort = $port;
+
+        if (PHP_SAPI !== 'cli' || !class_exists('Workerman\Worker', false)) {
+            self::$_isWorkermanEnv = false;
+        }
+
+        // For workerman environment.
+        if (self::$_isWorkermanEnv) {
+            if (strpos($ip, 'unix://') === false) {
+                $conn = new AsyncTcpConnection('frame://' . self::$_remoteIp . ':' . self::$_remotePort);
             } else {
-                self::$_remoteConnection = stream_socket_client('tcp://'.self::$_remoteIp.':'.self::$_remotePort, $code, $message, 5);
-                if (!self::$_remoteConnection) {
-                    throw new \Exception($message);
-                }
+                $conn = new AsyncTcpConnection($ip);
+                $conn->protocol = Frame::class;
+            }
+
+            $conn->onClose = [self::class, 'onRemoteClose'];
+            $conn->onConnect = [self::class, 'onRemoteConnect'];
+            $conn->onMessage = [self::class , 'onRemoteMessage'];
+            $conn->connect();
+
+            if (empty(self::$_pingTimer)) {
+                self::$_pingTimer = Timer::add(self::$pingInterval, 'Channel\Client::ping');
+            }
+            // Not workerman environment.
+        } else {
+            $remote = strpos($ip, 'unix://') === false ? 'tcp://'.self::$_remoteIp.':'.self::$_remotePort : $ip;
+            $conn = stream_socket_client($remote, $code, $message, 5);
+            if (!$conn) {
+                throw new \Exception($message);
             }
         }
+
+        self::$_remoteConnection = $conn;
     }
 
     /**
