@@ -241,7 +241,7 @@ class Client
 
     /**
      * Subscribe.
-     * @param string $events
+     * @param string|string[] $events
      * @return void
      */
     public static function subscribe($events)
@@ -257,7 +257,7 @@ class Client
 
     /**
      * Unsubscribe.
-     * @param string $events
+     * @param string|string[] $events
      * @return void
      */
     public static function unsubscribe($events)
@@ -271,7 +271,7 @@ class Client
 
     /**
      * Publish.
-     * @param string $events
+     * @param string|string[] $events
      * @param mixed $data
      */
     public static function publish($events, $data)
@@ -323,7 +323,7 @@ class Client
 
     /**
      * Unwatch a channel of queue
-     * @param string $channel
+     * @param string|string[] $channels
      * @throws \Exception
      */
     public static function unwatch($channels)
@@ -339,7 +339,7 @@ class Client
 
 	/**
 	 * Put data to queue
-	 * @param string|array $channels
+	 * @param string|string[] $channels
 	 * @param mixed $data
 	 * @throws \Exception
 	 */
