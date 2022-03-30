@@ -2,7 +2,7 @@
 namespace Channel;
 
 use Workerman\Connection\AsyncTcpConnection;
-use Workerman\Lib\Timer;
+use Workerman\Timer;
 use Workerman\Protocols\Frame;
 
 /**
