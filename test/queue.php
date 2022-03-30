@@ -3,7 +3,7 @@
 use Channel\Client;
 use Channel\Server;
 use Workerman\Worker;
-use Workerman\Lib\Timer;
+use Workerman\Timer;
 
 // composer autoload
 include __DIR__ . '/../vendor/autoload.php';
