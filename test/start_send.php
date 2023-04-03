@@ -17,7 +17,6 @@ $processName = "send";
 $worker->name = $processName;
 $worker->reusePort = true;   //开启均衡负载模式
 
-$date = date("Y-m-d");
 Worker::$pidFile = "var/{$processName}.pid";
 Worker::$logFile = "var/{$processName}_logFile.log";
 Worker::$stdoutFile = "var/{$processName}_stdout.log";
@@ -30,8 +29,7 @@ $worker->onWorkerStart = function() use($worker){
             'date' => date("Y-m-d H:i:s"),
         ];
         $event_name = "test_channel";
-        Channel\Client::publishLoop($event_name, $data_arr);
-        //echo microtime(true)."\n";
+        Channel\Client::publish($event_name, $data_arr , true);
     });
 };
 Worker::runAll();
