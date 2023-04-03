@@ -120,6 +120,20 @@ class Server
                     }
                 }
                 break;
+	   case 'publishLoop':
+                //choose one subscriber from the list to send
+                foreach ($data['channels'] as $channel) {
+                    if (empty($worker->channels[$channel])) {
+                        continue;
+                    }
+                    $buffer = serialize(array('type' => 'event', 'channel' => $channel, 'data' => $data['data']))."\n";
+                    $connection = next($worker->channels[$channel]);
+                    if( $connection == false ){
+                        $connection = reset($worker->channels[$channel]);
+                    }
+                    $connection->send($buffer);
+                }
+                break;
             case 'watch':
             	foreach ($data['channels'] as $channel) {
 		            $this->getQueue($channel)->addWatch($connection);
