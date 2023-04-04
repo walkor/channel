@@ -2,7 +2,7 @@
 namespace Channel;
 
 use Workerman\Connection\AsyncTcpConnection;
-use Workerman\Timer;
+use Workerman\Lib\Timer;
 use Workerman\Protocols\Frame;
 
 /**
@@ -80,7 +80,7 @@ class Client
      * Ping interval.
      * @var int
      */
-    public static $pingInterval = 25;
+    public static $pingInterval = 55;
 
     /**
      * Connect to channel server
@@ -241,7 +241,7 @@ class Client
 
     /**
      * Subscribe.
-     * @param string|string[] $events
+     * @param string $events
      * @return void
      */
     public static function subscribe($events)
@@ -257,7 +257,7 @@ class Client
 
     /**
      * Unsubscribe.
-     * @param string|string[] $events
+     * @param string $events
      * @return void
      */
     public static function unsubscribe($events)
@@ -271,14 +271,15 @@ class Client
 
     /**
      * Publish.
-     * @param string|string[] $events
+     * @param string $events
      * @param mixed $data
      */
-    public static function publish($events, $data)
+    public static function publish($events, $data , $is_loop = false)
     {
-        self::sendAnyway(array('type' => 'publish', 'channels' => (array)$events, 'data' => $data));
+        $type = $is_loop == true ? 'publishLoop' : 'publish';
+        self::sendAnyway(array('type' => $type, 'channels' => (array)$events, 'data' => $data));
     }
-
+    
     /**
      * Watch a channel of queue
      * @param string|array $channels
@@ -323,7 +324,7 @@ class Client
 
     /**
      * Unwatch a channel of queue
-     * @param string|string[] $channels
+     * @param string $channel
      * @throws \Exception
      */
     public static function unwatch($channels)
@@ -339,7 +340,7 @@ class Client
 
 	/**
 	 * Put data to queue
-	 * @param string|string[] $channels
+	 * @param string|array $channels
 	 * @param mixed $data
 	 * @throws \Exception
 	 */

@@ -120,6 +120,22 @@ class Server
                     }
                 }
                 break;
+            case 'publishLoop':
+                //choose one subscriber from the list
+                foreach ($data['channels'] as $channel) {
+                    if (empty($worker->channels[$channel])) {
+                        continue;
+                    }
+                    $buffer = serialize(array('type' => 'event', 'channel' => $channel, 'data' => $data['data']))."\n";
+
+                    //这是要点，每次取出一个元素，如果取不到，说明已经到最后，重置到第一个
+                    $connection = next($worker->channels[$channel]);
+                    if( $connection == false ){
+                        $connection = reset($worker->channels[$channel]);
+                    }
+                    $connection->send($buffer);
+                }
+                break;
             case 'watch':
             	foreach ($data['channels'] as $channel) {
 		            $this->getQueue($channel)->addWatch($connection);
