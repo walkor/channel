@@ -139,7 +139,7 @@ class Client
      */
     public static function onRemoteMessage($connection, $data)
     {
-        $data = unserialize($data);
+        $data = unserialize(rtrim($data, "\n"));
         $type = $data['type'];
         $event = $data['channel'];
         $event_data = $data['data'];
