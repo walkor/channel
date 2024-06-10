@@ -85,7 +85,7 @@ class Server
             return;
         }
         $worker = $this->_worker;
-        $data = unserialize($data);
+        $data = unserialize(rtrim($data, "\n"));
         $type = $data['type'];
         switch($type)
         {
