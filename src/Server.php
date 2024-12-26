@@ -85,7 +85,7 @@ class Server
             return;
         }
         $worker = $this->_worker;
-        $data = unserialize(rtrim($data, "\n"));
+        $data = unserialize($data);
         $type = $data['type'];
         switch($type)
         {
@@ -114,7 +114,7 @@ class Server
                     if (empty($worker->channels[$channel])) {
                         continue;
                     }
-                    $buffer = serialize(array('type' => 'event', 'channel' => $channel, 'data' => $data['data']))."\n";
+                    $buffer = serialize(array('type' => 'event', 'channel' => $channel, 'data' => $data['data']));
                     foreach ($worker->channels[$channel] as $connection) {
                         $connection->send($buffer);
                     }
@@ -126,7 +126,7 @@ class Server
                     if (empty($worker->channels[$channel])) {
                         continue;
                     }
-                    $buffer = serialize(array('type' => 'event', 'channel' => $channel, 'data' => $data['data']))."\n";
+                    $buffer = serialize(array('type' => 'event', 'channel' => $channel, 'data' => $data['data']));
 
                     //这是要点，每次取出一个元素，如果取不到，说明已经到最后，重置到第一个
                     $connection = next($worker->channels[$channel]);
