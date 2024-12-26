@@ -2,7 +2,7 @@
 namespace Channel;
 
 use Workerman\Connection\AsyncTcpConnection;
-use Workerman\Lib\Timer;
+use Workerman\Timer;
 use Workerman\Protocols\Frame;
 
 /**
@@ -139,7 +139,7 @@ class Client
      */
     public static function onRemoteMessage($connection, $data)
     {
-        $data = unserialize(rtrim($data, "\n"));
+        $data = unserialize($data);
         $type = $data['type'];
         $event = $data['channel'];
         $event_data = $data['data'];
@@ -181,7 +181,9 @@ class Client
      */
     public static function onRemoteClose()
     {
-        echo "Waring channel connection closed and try to reconnect\n";
+        Timer::add(0.5, function() {
+            echo "Waring channel connection closed and try to reconnect\n";
+        }, array(), false);
         self::$_remoteConnection = null;
         self::clearTimer();
         self::$_reconnectTimer = Timer::add(1, 'Channel\Client::connect', array(self::$_remoteIp, self::$_remotePort));
