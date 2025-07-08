@@ -98,7 +98,7 @@ class Client
         self::$_remoteIp = $ip;
         self::$_remotePort = $port;
 
-        if (PHP_SAPI !== 'cli' || !class_exists('Workerman\Worker', false)) {
+        if (!in_array(PHP_SAPI, ['cli', 'micro']) || !class_exists('Workerman\Worker', false)) {
             self::$_isWorkermanEnv = false;
         }
 
