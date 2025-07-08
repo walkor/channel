@@ -7,7 +7,6 @@ use Workerman\Protocols\Frame;
 
 /**
  * Channel/Client
- * @version 1.0.7
  */
 class Client
 {
